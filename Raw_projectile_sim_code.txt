@@ -1,0 +1,654 @@
+classdef PM20572096 < matlab.apps.AppBase
+
+    % Properties that correspond to app components
+    properties (Access = public)
+        UIFigure                        matlab.ui.Figure
+        DirectiondegreesEditField       matlab.ui.control.NumericEditField
+        DirectiondegreesEditFieldLabel  matlab.ui.control.Label
+        YcoordinatesEditField           matlab.ui.control.NumericEditField
+        YcoordinatesEditFieldLabel      matlab.ui.control.Label
+        CurrentvelocityEditField        matlab.ui.control.NumericEditField
+        CurrentvelocityEditFieldLabel   matlab.ui.control.Label
+        TimepassedEditField             matlab.ui.control.NumericEditField
+        TimepassedEditFieldLabel        matlab.ui.control.Label
+        XcoordinatesEditField           matlab.ui.control.NumericEditField
+        XcoordinatesEditFieldLabel      matlab.ui.control.Label
+        PointonlineSlider               matlab.ui.control.Slider
+        PointonlineSliderLabel          matlab.ui.control.Label
+        PleaseclickchosenscenarioagaintolaunchobjectLabel  matlab.ui.control.Label
+        HeightofhitmEditField           matlab.ui.control.NumericEditField
+        HeightofhitmEditFieldLabel      matlab.ui.control.Label
+        PleasechoosescenarioonenowallortwowithwallLabel  matlab.ui.control.Label
+        DistancefromlaunchpointtowallmEditField  matlab.ui.control.NumericEditField
+        DistancefromlaunchpointtowallmEditFieldLabel  matlab.ui.control.Label
+        WallheightmEditField            matlab.ui.control.NumericEditField
+        WallheightmEditFieldLabel       matlab.ui.control.Label
+        Scenario2Button                 matlab.ui.control.Button
+        InputdatahereLabel              matlab.ui.control.Label
+        MaximumHeightmEditField         matlab.ui.control.NumericEditField
+        MaximumHeightmEditFieldLabel    matlab.ui.control.Label
+        TimeofflightsEditField          matlab.ui.control.NumericEditField
+        TimeofflightsEditFieldLabel     matlab.ui.control.Label
+        HorizontaldistancetravelledmEditField  matlab.ui.control.NumericEditField
+        HorizontaldistancetravelledmEditFieldLabel  matlab.ui.control.Label
+        Scenario1Button                 matlab.ui.control.Button
+        DirectionofinitialvelocitydegreesEditField  matlab.ui.control.NumericEditField
+        DirectionofinitialvelocitydegreesEditFieldLabel  matlab.ui.control.Label
+        MagnitudeofinitialvelocitymsEditField  matlab.ui.control.NumericEditField
+        MagnitudeofinitialvelocitymsEditFieldLabel  matlab.ui.control.Label
+        HeightoflaunchpointmEditField   matlab.ui.control.NumericEditField
+        HeightoflaunchpointmEditFieldLabel  matlab.ui.control.Label
+        UIAxes                          matlab.ui.control.UIAxes
+    end
+
+    % Callbacks that handle component events
+    methods (Access = private)
+
+        % Button pushed function: Scenario1Button
+        function Scenario1ButtonPushed(app, event)
+            cla(app.UIAxes);
+
+            %making appropriate inputs visible to the user for scenario one
+            app.HeightoflaunchpointmEditField.Visible = "on";        %making height label and edit field visible
+            app.HeightoflaunchpointmEditFieldLabel.Visible = "on";
+
+            app.DirectionofinitialvelocitydegreesEditField.Visible = "on";     %making direction of initial velocity label and edit field visible 
+            app.DirectionofinitialvelocitydegreesEditFieldLabel.Visible ="on";
+
+            app.MagnitudeofinitialvelocitymsEditField.Visible = "on";       %making magnitude of initial velocity label and edit field visible 
+            app.MagnitudeofinitialvelocitymsEditFieldLabel.Visible = "on";
+
+            app.InputdatahereLabel.Visible = "on";       %making "Input data here" label visible so the user knows ehat they should input
+
+            app.PleasechoosescenarioonenowallortwowithwallLabel.Visible = "off";  %switching text from what scenario they want to choose, to explaining to click that scenario again
+            app.PleaseclickchosenscenarioagaintolaunchobjectLabel.Visible = "on";
+
+            app.HeightofhitmEditField.Visible = "off";   %making height of hit edit field and label invisible to the user
+            app.HeightofhitmEditFieldLabel.Visible = "off";
+
+            app.HorizontaldistancetravelledmEditField.Visible = "on";   %making horizontal distance travelled edit field and label visible 
+            app.HorizontaldistancetravelledmEditFieldLabel.Visible ="on";
+
+            app.WallheightmEditField.Visible = "off";    %making wall height label and edit field invisible to user
+            app.WallheightmEditFieldLabel.Visible = "off";
+
+            app.DistancefromlaunchpointtowallmEditField.Visible = "off";   %making distance from launch point to the wall edit field and label invisible
+            app.DistancefromlaunchpointtowallmEditFieldLabel.Visible = "off";
+
+
+            
+            %defining variables Height, Direction and Magnitude by linking them to the corresponding edit fields
+            height = app.HeightoflaunchpointmEditField.Value;
+            direction = app.DirectionofinitialvelocitydegreesEditField.Value; 
+            magnitude = app.MagnitudeofinitialvelocitymsEditField.Value;
+
+ 
+            
+            %calculating Ti
+            Ti = 0;     %defining Ti at the start
+            %assigning variables(0.5gTi^2 + U_verticalTi + H = 0) in the equation to a b and c 
+            a = -4.905;    %half of -9.81
+            b = magnitude*sind(direction);
+            c = height;
+
+            %calculation is done in steps to avoid error 
+            discriminant = (b)^2-(4*a*c);  %calculating the discriminant 
+            dsquare = sqrt(discriminant);  %calculating the square root of the discriminant 
+            quadPlus = (-b+(dsquare))/(2*a);  %using the quadratic formula to calculate the positive and negative results of the equation
+            quadNeg = (-b-(dsquare))/(2*a);
+            if quadNeg < 0           %checking and assigning the positive results to Ti 
+                Ti = quadPlus;
+            else
+                Ti = quadNeg;
+            end
+            %calulating vertical and horizontal initial velocity
+            U_vertical = magnitude*sind(direction); 
+            U_horizontal = magnitude*cosd(direction);
+
+
+            %defining horizontal and vertical components of graph
+            S_horizontal = U_horizontal*Ti;
+            S_vertical = (U_horizontal*Ti) +(0.5 *(-9.81)*(Ti.^2))+ height;
+
+            %assinging variables to Edit Fields
+            app.HorizontaldistancetravelledmEditField.Value = S_horizontal;
+            app.TimeofflightsEditField.Value = Ti;
+            app.MaximumHeightmEditField.Value = ((U_vertical.^2)/19.62)+height;
+
+            
+              
+            %creating animated lines of trajectory 
+            t = linspace(0,Ti,100);      %generates a linear spaced vector for time 
+
+            Anline = animatedline(app.UIAxes); %defining the animated line and assigning it to AnLine
+
+            x =(U_horizontal *t);    %defining x values and y values, using time to link them
+            y = (U_vertical*t)+((-4.905)*(t.^2))+ height;
+
+            for i = 1:length(t)                %creating a loop where it loops from 1 to the length of t
+                if isvalid(Anline)
+                    addpoints(Anline,x(i),y(i));   %adding coordinates to create the animated line
+                else
+                    break
+                end
+                drawnow;                       %drawing each point
+            end
+
+           hold(app.UIAxes,"on")        %making sure the previous line made stays on the graph  
+           quiver(app.UIAxes, 0, height, U_horizontal, 0, "AutoScale", "off") %showing the initial horizontal and vertical velocity in the form of vectors 
+           quiver(app.UIAxes, 0, height, 0, U_vertical, "AutoScale", "off")
+
+
+        end
+
+        % Button pushed function: Scenario2Button
+        function Scenario2ButtonPushed(app, event)
+            
+            cla(app.UIAxes);
+            %making appropriate inputs visible to the user 
+            app.HeightoflaunchpointmEditField.Visible = "on";   %making height label and edit field visible
+            app.HeightoflaunchpointmEditFieldLabel.Visible = "on";
+
+            app.DirectionofinitialvelocitydegreesEditField.Visible = "on";     %making direction of initial velocity label and edit field visible
+            app.DirectionofinitialvelocitydegreesEditFieldLabel.Visible ="on";
+
+            app.MagnitudeofinitialvelocitymsEditField.Visible = "on";     %making magnitude of initial velocity label and edit field visible 
+            app.MagnitudeofinitialvelocitymsEditFieldLabel.Visible = "on";
+
+            app.InputdatahereLabel.Visible = "on";     %making "Input data here" label visible so the user knows ehat they should input
+
+            app.DistancefromlaunchpointtowallmEditField.Visible = "on";  %making distance from the launch point to the wall label and edit field visible 
+            app.DistancefromlaunchpointtowallmEditFieldLabel.Visible = "on";
+
+            app.WallheightmEditField.Visible = "on";    %making the wall height label and edit field visible 
+            app.WallheightmEditFieldLabel.Visible = "on";
+
+            %switching text on the screen from "Please choose scenario one(no wall) or scenario two(with wall):" to
+            % "Please click chosen scenario again to launch object"
+            app.PleasechoosescenarioonenowallortwowithwallLabel.Visible = "off";
+            app.PleaseclickchosenscenarioagaintolaunchobjectLabel.Visible = "on";
+            
+
+            
+            
+            %defining variables Height, Direction, Magnitude, wall_height, and wall_distance by linking them to the corresponding edit fields
+            height = app.HeightoflaunchpointmEditField.Value;
+            direction = app.DirectionofinitialvelocitydegreesEditField.Value; 
+            magnitude = app.MagnitudeofinitialvelocitymsEditField.Value;
+            wall_height = app.WallheightmEditField.Value;
+            wall_distance = app.DistancefromlaunchpointtowallmEditField.Value;
+
+
+            %plotting wall, changing the line width to 2 and the colour to red
+            wall = plot(app.UIAxes, [wall_distance, wall_distance],[0, wall_height],"Color","r", "LineWidth",2);
+
+
+            %calculating Ti
+            Ti = 0;
+            %assigning variables(0.5gTi^2 + U_verticalTi + H = 0) in the equation to a b and c 
+            a = -4.905;
+            b = magnitude*sind(direction);
+            c = height;
+            %calculation is done in steps to avoid error 
+            discriminant = (b)^2-(4*a*c);  %calculating the discriminant 
+            dsquare = sqrt(discriminant);  %calculating the square root of the discriminant 
+            quadPlus = (-b+(dsquare))/(2*a);  %using the quadratic formula to calculate the results of the equation
+            quadNeg = (-b-(dsquare))/(2*a);
+            if quadNeg < 0           %checking and assigning the positive results to Ti 
+                Ti = quadPlus;
+            else
+                Ti = quadNeg;
+            end
+
+
+            %calulating vertical and horizontal initial velocity
+            U_vertical = magnitude*sind(direction); 
+            U_horizontal = magnitude*cosd(direction);
+
+
+            %defining horizontal and vertical components of graph
+            S_horizontal = U_horizontal*Ti;
+            S_vertical = (U_horizontal*Ti) +(0.5 *(-9.81)*(Ti.^2))+ height;
+
+            %calculating Tw
+            Tw = wall_distance/ U_horizontal;
+
+            %calculting the altitude at the distance from the launch point to the wall 
+            Syw = (U_vertical*Tw)+(-4.905*(Tw.^2))+height;
+
+
+    
+
+            %determining whether to use Tw or Ti by seeing if the altitudeis above zero and less than the
+            %wall height by using logical AND
+           
+            if Syw > 0 && Syw < wall_height
+                Ti = Tw;                     %Tw holds the value of the time that the object hits the wall
+                app.HeightofhitmEditField.Visible = "on";   %showing the user the height of hit on the wall 
+                app.HeightofhitmEditFieldLabel.Visible = "on";
+                Height_of_hit = (U_vertical*Ti)+(-4.905*(Ti.^2))+height;
+                app.HeightofhitmEditField.Value = Height_of_hit;
+                app.HorizontaldistancetravelledmEditField.Visible = "off"; %hiding the horizontal distance from the user 
+                app.HorizontaldistancetravelledmEditFieldLabel.Visible = "off";
+                
+
+            end
+
+            
+            %assinging variables to Edit Fields
+            app.HorizontaldistancetravelledmEditField.Value = S_horizontal;
+            app.TimeofflightsEditField.Value = Ti;
+            app.MaximumHeightmEditField.Value = ((U_vertical.^2)/19.62)+height;
+            
+
+            %creating animated lines of trajectory 
+            t = linspace(0,Ti,100);      %generates a linear spaced vector for time 
+
+            Anline = animatedline(app.UIAxes); %defining the animated line and assigning it to AnLine
+
+            x =(U_horizontal *t);    %defining x values and y values, using time to link them
+            y = (U_vertical*t)+((-4.905)*(t.^2))+ height;
+
+            for i = 1:length(t)                %creating a loop where it loops from 1 to the length of t
+                if isvalid(Anline)
+                    addpoints(Anline,x(i),y(i));   %adding coordinates to create the animated line
+                else
+                    break
+                end
+                drawnow;                       %drawing each point
+            end
+           hold(app.UIAxes,"on")         %%making sure the previous line made stays on the graph 
+           quiver(app.UIAxes, 0, height, U_horizontal, 0, "AutoScale", "off") %showing the initial horizontal and vertical velocity in the form of vectors 
+           quiver(app.UIAxes, 0, height, 0, U_vertical, "AutoScale", "off")
+
+
+        end
+
+        % Value changing function: PointonlineSlider
+        function PointonlineSliderValueChanging(app, event)
+            changingValue = event.Value;
+
+            %defining the horizontal distance and height of hit on the wa;;
+            horo_dis = app.HorizontaldistancetravelledmEditField.Value;
+            hit_wall = app.HeightofhitmEditField.Value;
+            
+
+            %defining the limits of the slider as 0 to the horizontal
+            %distance
+            app.PointonlineSlider.Limits = [0 horo_dis];
+            
+            %defining variables to be calculated from the point on slider
+            x_coords = app.XcoordinatesEditField.Value;
+            y_coords = app.YcoordinatesEditField.Value;
+            time_passed = app.TimepassedEditField.Value;
+            current_v = app.CurrentvelocityEditField.Value;
+            direction_slider = app.DirectiondegreesEditField.Value;
+
+            %defining variables previously used in other functions
+            magnitude = app.MagnitudeofinitialvelocitymsEditField.Value;
+            direction = app.DirectionofinitialvelocitydegreesEditField.Value; 
+            U_vertical = magnitude*sind(direction);
+            U_horizontal = magnitude *cosd(direction);
+            height = app.HeightoflaunchpointmEditField.Value;
+            wall_height = app.WallheightmEditField.Value;
+            wall_distance = app.DistancefromlaunchpointtowallmEditField.Value;
+            
+            
+            %calculating Ti
+            Ti = 0;
+            %assigning variables(0.5gTi^2 + U_verticalTi + H = 0) in the equation to a b and c 
+            a = -4.905;
+            b = magnitude*sind(direction);
+            c = height;
+            %calculation is done in steps to avoid error 
+            discriminant = (b)^2-(4*a*c);  %calculating the discriminant 
+            dsquare = sqrt(discriminant);  %calculating the square root of the discriminant 
+            quadPlus = (-b+(dsquare))/(2*a);  %using the quadratic formula to calculate the results of the equation
+            quadNeg = (-b-(dsquare))/(2*a);
+            if quadNeg < 0           %checking and assigning the positive results to Ti 
+                Ti = quadPlus;
+            else
+                Ti = quadNeg;
+            end
+
+            %calculating Tw
+            Tw = wall_distance/ U_horizontal;
+
+            %calculting the altitude at the distance from the launch point to the wall 
+            Syw = (U_vertical*Tw)+(-4.905*(Tw.^2))+height;
+
+
+            %determining whether to use Tw or Ti by seeing if the altitudeis above zero and less than the wall height by using logical AND
+            if Syw > 0 && Syw < wall_height
+                Ti = Tw;  
+            end
+
+
+            
+            %taking value from the slider and assigning to the x coordinates 
+            x_coords = app.PointonlineSlider.Value;
+
+            %calculating y coordinates 
+
+            y_coords = ((U_vertical*(x_coords/U_horizontal))+((-4.905)*((x_coords/U_horizontal).^2))+ height) ;
+            
+            %assigning calculated x and y coordinates to their corresponding edit fields
+            app.XcoordinatesEditField.Value = x_coords;
+            app.YcoordinatesEditField.Value = y_coords;
+            
+            %calculating time passed 
+            time_passed = x_coords/ U_horizontal;
+            %asssigning time_passed to corressponding edit field
+            app.TimepassedEditField.Value = time_passed;
+
+            %calculating current velocity using the equation V = U + at
+            current_v = magnitude + (-9.81*time_passed);
+            current_v  = magnitude +time_passed;
+            %assigning current_v to its edit field 
+            app.CurrentvelocityEditField.Value = current_v;
+
+
+               
+            %calculating horizontal and vertical displacement 
+            S_horizontal = U_horizontal*(x_coords/U_horizontal);
+            S_vertical = (U_horizontal*(x_coords/U_horizontal)) +(0.5 *(-9.81)*((x_coords/U_horizontal).^2))+ height;
+            %calculating direction
+            direction_slider = atand(S_vertical/S_horizontal)-45;
+            
+
+            %stopping the slider from going past the horizontal distance travelled for scenario two
+            if time_passed>=Ti
+                horo_dis = U_horizontal *Ti;  %calulating new horizontal distance
+                app.HorizontaldistancetravelledmEditField.Value = horo_dis;  %updating the horizontal distance edit field 
+            end
+
+
+            %updating all edit fields corressponding to the slider with updated values
+            app.DirectiondegreesEditField.Value = direction_slider;
+            app.XcoordinatesEditField.Value = x_coords;
+            app.YcoordinatesEditField.Value = y_coords;
+            app.TimepassedEditField.Value = time_passed;
+            app.CurrentvelocityEditField.Value = current_v;
+
+
+        end
+    end
+
+    % Component initialization
+    methods (Access = private)
+
+        % Create UIFigure and components
+        function createComponents(app)
+
+            % Create UIFigure and hide until all components are created
+            app.UIFigure = uifigure('Visible', 'off');
+            app.UIFigure.Color = [0.3529 0.6 0.4275];
+            app.UIFigure.Position = [100 100 677 480];
+            app.UIFigure.Name = 'MATLAB App';
+
+            % Create UIAxes
+            app.UIAxes = uiaxes(app.UIFigure);
+            title(app.UIAxes, {''; 'Projection Simulator'})
+            xlabel(app.UIAxes, 'X')
+            ylabel(app.UIAxes, 'Y')
+            zlabel(app.UIAxes, 'Z')
+            app.UIAxes.XGrid = 'on';
+            app.UIAxes.YGrid = 'on';
+            app.UIAxes.Position = [1 152 356 329];
+
+            % Create HeightoflaunchpointmEditFieldLabel
+            app.HeightoflaunchpointmEditFieldLabel = uilabel(app.UIFigure);
+            app.HeightoflaunchpointmEditFieldLabel.HorizontalAlignment = 'right';
+            app.HeightoflaunchpointmEditFieldLabel.FontSize = 10;
+            app.HeightoflaunchpointmEditFieldLabel.Visible = 'off';
+            app.HeightoflaunchpointmEditFieldLabel.Position = [399 427 117 22];
+            app.HeightoflaunchpointmEditFieldLabel.Text = 'Height of launch point(m)';
+
+            % Create HeightoflaunchpointmEditField
+            app.HeightoflaunchpointmEditField = uieditfield(app.UIFigure, 'numeric');
+            app.HeightoflaunchpointmEditField.FontSize = 10;
+            app.HeightoflaunchpointmEditField.Visible = 'off';
+            app.HeightoflaunchpointmEditField.Position = [531 427 100 22];
+
+            % Create MagnitudeofinitialvelocitymsEditFieldLabel
+            app.MagnitudeofinitialvelocitymsEditFieldLabel = uilabel(app.UIFigure);
+            app.MagnitudeofinitialvelocitymsEditFieldLabel.HorizontalAlignment = 'right';
+            app.MagnitudeofinitialvelocitymsEditFieldLabel.FontSize = 10;
+            app.MagnitudeofinitialvelocitymsEditFieldLabel.Visible = 'off';
+            app.MagnitudeofinitialvelocitymsEditFieldLabel.Position = [370 395 147 22];
+            app.MagnitudeofinitialvelocitymsEditFieldLabel.Text = 'Magnitude of initial velocity(m/s)';
+
+            % Create MagnitudeofinitialvelocitymsEditField
+            app.MagnitudeofinitialvelocitymsEditField = uieditfield(app.UIFigure, 'numeric');
+            app.MagnitudeofinitialvelocitymsEditField.Visible = 'off';
+            app.MagnitudeofinitialvelocitymsEditField.Position = [532 395 100 22];
+
+            % Create DirectionofinitialvelocitydegreesEditFieldLabel
+            app.DirectionofinitialvelocitydegreesEditFieldLabel = uilabel(app.UIFigure);
+            app.DirectionofinitialvelocitydegreesEditFieldLabel.HorizontalAlignment = 'right';
+            app.DirectionofinitialvelocitydegreesEditFieldLabel.FontSize = 10;
+            app.DirectionofinitialvelocitydegreesEditFieldLabel.Visible = 'off';
+            app.DirectionofinitialvelocitydegreesEditFieldLabel.Position = [357 362 160 22];
+            app.DirectionofinitialvelocitydegreesEditFieldLabel.Text = 'Direction of initial velocity(degrees)';
+
+            % Create DirectionofinitialvelocitydegreesEditField
+            app.DirectionofinitialvelocitydegreesEditField = uieditfield(app.UIFigure, 'numeric');
+            app.DirectionofinitialvelocitydegreesEditField.Visible = 'off';
+            app.DirectionofinitialvelocitydegreesEditField.Position = [532 362 100 22];
+
+            % Create Scenario1Button
+            app.Scenario1Button = uibutton(app.UIFigure, 'push');
+            app.Scenario1Button.ButtonPushedFcn = createCallbackFcn(app, @Scenario1ButtonPushed, true);
+            app.Scenario1Button.Position = [57 93 100 23];
+            app.Scenario1Button.Text = 'Scenario 1';
+
+            % Create HorizontaldistancetravelledmEditFieldLabel
+            app.HorizontaldistancetravelledmEditFieldLabel = uilabel(app.UIFigure);
+            app.HorizontaldistancetravelledmEditFieldLabel.HorizontalAlignment = 'right';
+            app.HorizontaldistancetravelledmEditFieldLabel.FontSize = 10;
+            app.HorizontaldistancetravelledmEditFieldLabel.Position = [371 230 146 22];
+            app.HorizontaldistancetravelledmEditFieldLabel.Text = 'Horizontal distance travelled(m)';
+
+            % Create HorizontaldistancetravelledmEditField
+            app.HorizontaldistancetravelledmEditField = uieditfield(app.UIFigure, 'numeric');
+            app.HorizontaldistancetravelledmEditField.Editable = 'off';
+            app.HorizontaldistancetravelledmEditField.FontSize = 10;
+            app.HorizontaldistancetravelledmEditField.Position = [532 230 100 22];
+
+            % Create TimeofflightsEditFieldLabel
+            app.TimeofflightsEditFieldLabel = uilabel(app.UIFigure);
+            app.TimeofflightsEditFieldLabel.HorizontalAlignment = 'right';
+            app.TimeofflightsEditFieldLabel.FontSize = 10;
+            app.TimeofflightsEditFieldLabel.Position = [442 193 74 22];
+            app.TimeofflightsEditFieldLabel.Text = 'Time of flight(s)';
+
+            % Create TimeofflightsEditField
+            app.TimeofflightsEditField = uieditfield(app.UIFigure, 'numeric');
+            app.TimeofflightsEditField.Editable = 'off';
+            app.TimeofflightsEditField.Position = [531 193 100 22];
+
+            % Create MaximumHeightmEditFieldLabel
+            app.MaximumHeightmEditFieldLabel = uilabel(app.UIFigure);
+            app.MaximumHeightmEditFieldLabel.HorizontalAlignment = 'right';
+            app.MaximumHeightmEditFieldLabel.FontSize = 10;
+            app.MaximumHeightmEditFieldLabel.Position = [422 152 95 22];
+            app.MaximumHeightmEditFieldLabel.Text = 'Maximum Height(m)';
+
+            % Create MaximumHeightmEditField
+            app.MaximumHeightmEditField = uieditfield(app.UIFigure, 'numeric');
+            app.MaximumHeightmEditField.Editable = 'off';
+            app.MaximumHeightmEditField.Position = [532 152 100 22];
+
+            % Create InputdatahereLabel
+            app.InputdatahereLabel = uilabel(app.UIFigure);
+            app.InputdatahereLabel.FontSize = 14;
+            app.InputdatahereLabel.FontWeight = 'bold';
+            app.InputdatahereLabel.Visible = 'off';
+            app.InputdatahereLabel.Position = [453 448 110 22];
+            app.InputdatahereLabel.Text = 'Input data here:';
+
+            % Create Scenario2Button
+            app.Scenario2Button = uibutton(app.UIFigure, 'push');
+            app.Scenario2Button.ButtonPushedFcn = createCallbackFcn(app, @Scenario2ButtonPushed, true);
+            app.Scenario2Button.Position = [208 93 100 23];
+            app.Scenario2Button.Text = 'Scenario 2';
+
+            % Create WallheightmEditFieldLabel
+            app.WallheightmEditFieldLabel = uilabel(app.UIFigure);
+            app.WallheightmEditFieldLabel.HorizontalAlignment = 'right';
+            app.WallheightmEditFieldLabel.FontSize = 10;
+            app.WallheightmEditFieldLabel.Visible = 'off';
+            app.WallheightmEditFieldLabel.Position = [448 330 69 22];
+            app.WallheightmEditFieldLabel.Text = 'Wall height(m)';
+
+            % Create WallheightmEditField
+            app.WallheightmEditField = uieditfield(app.UIFigure, 'numeric');
+            app.WallheightmEditField.Visible = 'off';
+            app.WallheightmEditField.Position = [532 330 100 22];
+
+            % Create DistancefromlaunchpointtowallmEditFieldLabel
+            app.DistancefromlaunchpointtowallmEditFieldLabel = uilabel(app.UIFigure);
+            app.DistancefromlaunchpointtowallmEditFieldLabel.HorizontalAlignment = 'right';
+            app.DistancefromlaunchpointtowallmEditFieldLabel.FontSize = 10;
+            app.DistancefromlaunchpointtowallmEditFieldLabel.Visible = 'off';
+            app.DistancefromlaunchpointtowallmEditFieldLabel.Position = [347 298 170 22];
+            app.DistancefromlaunchpointtowallmEditFieldLabel.Text = 'Distance from launch point to wall(m)';
+
+            % Create DistancefromlaunchpointtowallmEditField
+            app.DistancefromlaunchpointtowallmEditField = uieditfield(app.UIFigure, 'numeric');
+            app.DistancefromlaunchpointtowallmEditField.Visible = 'off';
+            app.DistancefromlaunchpointtowallmEditField.Position = [532 298 100 22];
+
+            % Create PleasechoosescenarioonenowallortwowithwallLabel
+            app.PleasechoosescenarioonenowallortwowithwallLabel = uilabel(app.UIFigure);
+            app.PleasechoosescenarioonenowallortwowithwallLabel.FontSize = 14;
+            app.PleasechoosescenarioonenowallortwowithwallLabel.FontWeight = 'bold';
+            app.PleasechoosescenarioonenowallortwowithwallLabel.Position = [16 131 374 22];
+            app.PleasechoosescenarioonenowallortwowithwallLabel.Text = 'Please choose scenario one(no wall) or two(with wall):';
+
+            % Create HeightofhitmEditFieldLabel
+            app.HeightofhitmEditFieldLabel = uilabel(app.UIFigure);
+            app.HeightofhitmEditFieldLabel.HorizontalAlignment = 'right';
+            app.HeightofhitmEditFieldLabel.FontSize = 10;
+            app.HeightofhitmEditFieldLabel.Visible = 'off';
+            app.HeightofhitmEditFieldLabel.Position = [433 230 73 22];
+            app.HeightofhitmEditFieldLabel.Text = 'Height of hit(m)';
+
+            % Create HeightofhitmEditField
+            app.HeightofhitmEditField = uieditfield(app.UIFigure, 'numeric');
+            app.HeightofhitmEditField.Editable = 'off';
+            app.HeightofhitmEditField.FontSize = 10;
+            app.HeightofhitmEditField.Visible = 'off';
+            app.HeightofhitmEditField.Position = [531 230 100 22];
+
+            % Create PleaseclickchosenscenarioagaintolaunchobjectLabel
+            app.PleaseclickchosenscenarioagaintolaunchobjectLabel = uilabel(app.UIFigure);
+            app.PleaseclickchosenscenarioagaintolaunchobjectLabel.FontSize = 14;
+            app.PleaseclickchosenscenarioagaintolaunchobjectLabel.FontWeight = 'bold';
+            app.PleaseclickchosenscenarioagaintolaunchobjectLabel.Visible = 'off';
+            app.PleaseclickchosenscenarioagaintolaunchobjectLabel.Position = [16 131 355 22];
+            app.PleaseclickchosenscenarioagaintolaunchobjectLabel.Text = 'Please click chosen scenario again to launch object';
+
+            % Create PointonlineSliderLabel
+            app.PointonlineSliderLabel = uilabel(app.UIFigure);
+            app.PointonlineSliderLabel.HorizontalAlignment = 'right';
+            app.PointonlineSliderLabel.Position = [1 50 71 22];
+            app.PointonlineSliderLabel.Text = 'Point on line';
+
+            % Create PointonlineSlider
+            app.PointonlineSlider = uislider(app.UIFigure);
+            app.PointonlineSlider.Limits = [0 35];
+            app.PointonlineSlider.ValueChangingFcn = createCallbackFcn(app, @PointonlineSliderValueChanging, true);
+            app.PointonlineSlider.Position = [93 59 150 3];
+
+            % Create XcoordinatesEditFieldLabel
+            app.XcoordinatesEditFieldLabel = uilabel(app.UIFigure);
+            app.XcoordinatesEditFieldLabel.HorizontalAlignment = 'right';
+            app.XcoordinatesEditFieldLabel.FontSize = 10;
+            app.XcoordinatesEditFieldLabel.Position = [282 72 66 22];
+            app.XcoordinatesEditFieldLabel.Text = 'X coordinates';
+
+            % Create XcoordinatesEditField
+            app.XcoordinatesEditField = uieditfield(app.UIFigure, 'numeric');
+            app.XcoordinatesEditField.Editable = 'off';
+            app.XcoordinatesEditField.FontSize = 10;
+            app.XcoordinatesEditField.Position = [363 72 100 22];
+
+            % Create TimepassedEditFieldLabel
+            app.TimepassedEditFieldLabel = uilabel(app.UIFigure);
+            app.TimepassedEditFieldLabel.HorizontalAlignment = 'right';
+            app.TimepassedEditFieldLabel.FontSize = 10;
+            app.TimepassedEditFieldLabel.Position = [286 40 62 22];
+            app.TimepassedEditFieldLabel.Text = 'Time passed';
+
+            % Create TimepassedEditField
+            app.TimepassedEditField = uieditfield(app.UIFigure, 'numeric');
+            app.TimepassedEditField.Editable = 'off';
+            app.TimepassedEditField.Position = [363 40 100 22];
+
+            % Create CurrentvelocityEditFieldLabel
+            app.CurrentvelocityEditFieldLabel = uilabel(app.UIFigure);
+            app.CurrentvelocityEditFieldLabel.HorizontalAlignment = 'right';
+            app.CurrentvelocityEditFieldLabel.FontSize = 10;
+            app.CurrentvelocityEditFieldLabel.Position = [274 7 74 22];
+            app.CurrentvelocityEditFieldLabel.Text = 'Current velocity';
+
+            % Create CurrentvelocityEditField
+            app.CurrentvelocityEditField = uieditfield(app.UIFigure, 'numeric');
+            app.CurrentvelocityEditField.Editable = 'off';
+            app.CurrentvelocityEditField.Position = [363 7 100 22];
+
+            % Create YcoordinatesEditFieldLabel
+            app.YcoordinatesEditFieldLabel = uilabel(app.UIFigure);
+            app.YcoordinatesEditFieldLabel.HorizontalAlignment = 'right';
+            app.YcoordinatesEditFieldLabel.FontSize = 10;
+            app.YcoordinatesEditFieldLabel.Position = [482 72 66 22];
+            app.YcoordinatesEditFieldLabel.Text = 'Y coordinates';
+
+            % Create YcoordinatesEditField
+            app.YcoordinatesEditField = uieditfield(app.UIFigure, 'numeric');
+            app.YcoordinatesEditField.Editable = 'off';
+            app.YcoordinatesEditField.Position = [563 72 100 22];
+
+            % Create DirectiondegreesEditFieldLabel
+            app.DirectiondegreesEditFieldLabel = uilabel(app.UIFigure);
+            app.DirectiondegreesEditFieldLabel.HorizontalAlignment = 'right';
+            app.DirectiondegreesEditFieldLabel.FontSize = 10;
+            app.DirectiondegreesEditFieldLabel.Position = [462 38 87 22];
+            app.DirectiondegreesEditFieldLabel.Text = 'Direction(degrees)';
+
+            % Create DirectiondegreesEditField
+            app.DirectiondegreesEditField = uieditfield(app.UIFigure, 'numeric');
+            app.DirectiondegreesEditField.Editable = 'off';
+            app.DirectiondegreesEditField.Position = [564 38 100 22];
+
+            % Show the figure after all components are created
+            app.UIFigure.Visible = 'on';
+        end
+    end
+
+    % App creation and deletion
+    methods (Access = public)
+
+        % Construct app
+        function app = PM20572096
+
+            % Create UIFigure and components
+            createComponents(app)
+
+            % Register the app with App Designer
+            registerApp(app, app.UIFigure)
+
+            if nargout == 0
+                clear app
+            end
+        end
+
+        % Code that executes before app deletion
+        function delete(app)
+
+            % Delete UIFigure when app is deleted
+            delete(app.UIFigure)
+        end
+    end
+end
