@@ -56,7 +56,7 @@ The simulator supports two scenarios:
 ---
 
 ## How to run
-1. Open the `.m` or `.mlapp` file in MATLAB
+1. Open the `.mlapp` file in MATLAB
 2. Run the script or app
 3. Enter the required inputs through the GUI
 4. Select a scenario
@@ -71,3 +71,4 @@ The simulator supports two scenarios:
 - Creating interactive GUIs
 - Writing readable, well-documented code
 - Implementing error handling and input validation
+
